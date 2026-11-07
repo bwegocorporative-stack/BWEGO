@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "",
+    "slug": "bwego",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/bwe-go.png",
+    "scheme": "bwego",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "icon": "./assets/images/bwe-go.png"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#208AEF",
+        "foregroundImage": "./assets/images/bwe-go.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "server",
+      "favicon": "./assets/images/bwe-go.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permite que o Bwé-Go aceda às tuas fotografias para adicionares uma foto de perfil."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#208AEF",
+          "image": "./assets/images/bwe-go.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
