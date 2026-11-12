@@ -40,6 +40,31 @@ export async function listarViagens() {
   return resultado.viagens || [];
 }
 
+export async function listarPedidosViagemPerto(raioKm = 10) {
+  const parametros = new URLSearchParams({ raio_km: String(raioKm) });
+  const resultado = await requisitarViagens(`/disponiveis?${parametros.toString()}`);
+  return resultado.pedidos || [];
+}
+
+export async function obterViagemAtivaMotorista() {
+  const resultado = await requisitarViagens('/ativa');
+  return resultado.viagem || null;
+}
+
+export async function aceitarViagemMotorista(id) {
+  return requisitarViagens(`/${encodeURIComponent(id)}/aceitar`, {
+    method: 'PATCH',
+    body: JSON.stringify({}),
+  });
+}
+
+export async function atualizarEstadoViagemMotorista(id, estado) {
+  return requisitarViagens(`/${encodeURIComponent(id)}/estado`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estado }),
+  });
+}
+
 export async function obterEnderecoCoordenadas(latitude, longitude) {
   const parametros = new URLSearchParams({
     latitude: String(latitude),

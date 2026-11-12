@@ -1,20 +1,19 @@
-
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 import {
+  ActivityIndicator,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-} from 'react-native';
+} from "react-native";
 
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // ==========================================
 // SERVIÇOS PRINCIPAIS
@@ -22,32 +21,32 @@ import * as Location from 'expo-location';
 
 const servicos = [
   {
-    titulo: 'Bwé Ride',
-    descricao: 'Viagens rápidas e seguras pela cidade.',
-    icon: 'car-sport-outline',
-    cor: '#FFF2DC',
-    categoria: 'Mobilidade',
+    titulo: "Bwé Ride",
+    descricao: "Viagens rápidas e seguras pela cidade.",
+    icon: "car-sport-outline",
+    cor: "#FFF2DC",
+    categoria: "Mobilidade",
   },
   {
-    titulo: 'Bwé Delivery',
-    descricao: 'Envio e entrega de encomendas.',
-    icon: 'cube-outline',
-    cor: '#E8F5E9',
-    categoria: 'Logística',
+    titulo: "Bwé Delivery",
+    descricao: "Envio e entrega de encomendas.",
+    icon: "cube-outline",
+    cor: "#E8F5E9",
+    categoria: "Logística",
   },
   {
-    titulo: 'Bwé Farma',
-    descricao: 'Medicamentos e produtos de farmácia.',
-    icon: 'medkit-outline',
-    cor: '#FCE8E8',
-    categoria: 'Saúde',
+    titulo: "Bwé Farma",
+    descricao: "Medicamentos e produtos de farmácia.",
+    icon: "medkit-outline",
+    cor: "#FCE8E8",
+    categoria: "Saúde",
   },
   {
-    titulo: 'Bwé Market',
-    descricao: 'Compras de supermercados à distância.',
-    icon: 'cart-outline',
-    cor: '#E8EEFF',
-    categoria: 'Compras',
+    titulo: "Bwé Market",
+    descricao: "Compras de supermercados à distância.",
+    icon: "cart-outline",
+    cor: "#E8EEFF",
+    categoria: "Compras",
   },
 ];
 
@@ -57,40 +56,40 @@ const servicos = [
 
 const transportes = [
   {
-    titulo: 'Bwé Moto',
-    descricao: 'Mototáxi para deslocações rápidas.',
-    icon: 'bicycle-outline',
-    cor: '#FFF2DC',
+    titulo: "Bwé Moto",
+    descricao: "Mototáxi para deslocações rápidas.",
+    icon: "bicycle-outline",
+    cor: "#FFF2DC",
   },
   {
-    titulo: 'Bwé Bike',
-    descricao: 'Bicicletas eléctricas.',
-    icon: 'bicycle',
-    cor: '#E8F5E9',
+    titulo: "Bwé Bike",
+    descricao: "Bicicletas eléctricas.",
+    icon: "bicycle",
+    cor: "#E8F5E9",
   },
   {
-    titulo: 'Bwé Scooter',
-    descricao: 'Trotinetas eléctricas.',
-    icon: 'flash-outline',
-    cor: '#F1EAFE',
+    titulo: "Bwé Scooter",
+    descricao: "Trotinetas eléctricas.",
+    icon: "flash-outline",
+    cor: "#F1EAFE",
   },
   {
-    titulo: 'Bwé Comfort',
-    descricao: 'Viaturas ligeiras até 5 lugares.',
-    icon: 'car-outline',
-    cor: '#E8EEFF',
+    titulo: "Bwé Comfort",
+    descricao: "Viaturas ligeiras até 5 lugares.",
+    icon: "car-outline",
+    cor: "#E8EEFF",
   },
   {
-    titulo: 'Bwé Família',
-    descricao: 'Viaturas espaçosas até 8 lugares.',
-    icon: 'people-outline',
-    cor: '#FCE8E8',
+    titulo: "Bwé Família",
+    descricao: "Viaturas espaçosas até 8 lugares.",
+    icon: "people-outline",
+    cor: "#FCE8E8",
   },
   {
-    titulo: 'Bwé VIP',
-    descricao: 'Transporte executivo e exclusivo.',
-    icon: 'diamond-outline',
-    cor: '#FFF5D9',
+    titulo: "Bwé VIP",
+    descricao: "Transporte executivo e exclusivo.",
+    icon: "diamond-outline",
+    cor: "#FFF5D9",
   },
 ];
 
@@ -100,19 +99,19 @@ const transportes = [
 
 const provincias = [
   {
-    nome: 'Luanda',
-    descricao: 'Mobilidade urbana e entregas.',
-    icon: 'business-outline',
+    nome: "Luanda",
+    descricao: "Mobilidade urbana e entregas.",
+    icon: "business-outline",
   },
   {
-    nome: 'Lubango',
-    descricao: 'Conectividade e serviços regionais.',
-    icon: 'location-outline',
+    nome: "Lubango",
+    descricao: "Conectividade e serviços regionais.",
+    icon: "location-outline",
   },
   {
-    nome: 'Moxico',
-    descricao: 'Expansão e inclusão logística.',
-    icon: 'map-outline',
+    nome: "Moxico",
+    descricao: "Expansão e inclusão logística.",
+    icon: "map-outline",
   },
 ];
 
@@ -122,13 +121,12 @@ const provincias = [
 
 export default function IndexScreen() {
   const [localizacao, setLocalizacao] = useState({
-    provincia: '',
-    municipio: '',
-    pais: '',
+    provincia: "",
+    municipio: "",
+    pais: "",
   });
 
-  const [carregandoLocalizacao, setCarregandoLocalizacao] =
-    useState(true);
+  const [carregandoLocalizacao, setCarregandoLocalizacao] = useState(true);
 
   const [erroLocalizacao, setErroLocalizacao] = useState(false);
 
@@ -137,11 +135,11 @@ export default function IndexScreen() {
   // ========================================
 
   const irParaLogin = () => {
-    router.push('/login');
+    router.push("/login");
   };
 
   const irParaRegisto = () => {
-    router.push('/register');
+    router.push("/register");
   };
 
   // ========================================
@@ -154,15 +152,14 @@ export default function IndexScreen() {
       setErroLocalizacao(false);
 
       // Solicitar autorização ao utilizador
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
 
-      if (status !== 'granted') {
+      if (status !== "granted") {
         setErroLocalizacao(true);
         setLocalizacao({
-          provincia: '',
-          municipio: '',
-          pais: '',
+          provincia: "",
+          municipio: "",
+          pais: "",
         });
         return;
       }
@@ -183,25 +180,21 @@ export default function IndexScreen() {
 
         setLocalizacao({
           provincia:
-            endereco.region ||
-            endereco.subregion ||
-            'Não identificada',
+            endereco.region || endereco.subregion || "Não identificada",
 
           municipio:
             endereco.subregion ||
             endereco.city ||
             endereco.district ||
-            'Não identificado',
+            "Não identificado",
 
-          pais:
-            endereco.country ||
-            'Não identificado',
+          pais: endereco.country || "Não identificado",
         });
       } else {
         setErroLocalizacao(true);
       }
     } catch (error) {
-      console.log('Erro ao obter localização:', error);
+      console.log("Erro ao obter localização:", error);
 
       setErroLocalizacao(true);
     } finally {
@@ -221,10 +214,7 @@ export default function IndexScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar
-        backgroundColor="#FFFFFF"
-        barStyle="dark-content"
-      />
+      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -235,11 +225,7 @@ export default function IndexScreen() {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoIcon}>
-              <Ionicons
-                name="car-sport"
-                size={27}
-                color="#FFFFFF"
-              />
+              <Ionicons name="car-sport" size={27} color="#FFFFFF" />
             </View>
 
             <Text style={styles.logoText}>
@@ -253,9 +239,7 @@ export default function IndexScreen() {
             onPress={irParaLogin}
             activeOpacity={0.8}
           >
-            <Text style={styles.headerLoginText}>
-              Entrar
-            </Text>
+            <Text style={styles.headerLoginText}>Entrar</Text>
           </TouchableOpacity>
         </View>
 
@@ -267,33 +251,22 @@ export default function IndexScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.locationIcon}>
-            <Ionicons
-              name="location"
-              size={23}
-              color="#173B70"
-            />
+            <Ionicons name="location" size={23} color="#173B70" />
           </View>
 
           <View style={styles.locationInfo}>
-            <Text style={styles.locationTitle}>
-              A tua localização actual
-            </Text>
+            <Text style={styles.locationTitle}>A tua localização actual</Text>
 
             {carregandoLocalizacao ? (
               <View style={styles.loadingLocation}>
-                <ActivityIndicator
-                  size="small"
-                  color="#173B70"
-                />
+                <ActivityIndicator size="small" color="#173B70" />
 
-                <Text style={styles.locationText}>
-                  A obter localização...
-                </Text>
+                <Text style={styles.locationText}>A obter localização...</Text>
               </View>
             ) : erroLocalizacao ? (
               <Text style={styles.locationError}>
-                Não foi possível obter a localização.
-                Toca para tentar novamente.
+                Não foi possível obter a localização. Toca para tentar
+                novamente.
               </Text>
             ) : (
               <>
@@ -312,22 +285,14 @@ export default function IndexScreen() {
             )}
           </View>
 
-          <Ionicons
-            name="refresh-outline"
-            size={20}
-            color="#8993A2"
-          />
+          <Ionicons name="refresh-outline" size={20} color="#8993A2" />
         </TouchableOpacity>
 
         {/* APRESENTAÇÃO */}
 
         <View style={styles.hero}>
           <View style={styles.badge}>
-            <Ionicons
-              name="location"
-              size={14}
-              color="#B8790C"
-            />
+            <Ionicons name="location" size={14} color="#B8790C" />
 
             <Text style={styles.badgeText}>
               Mobilidade e logística em Angola
@@ -335,45 +300,14 @@ export default function IndexScreen() {
           </View>
 
           <Text style={styles.heroTitle}>
-            A tua cidade,{' \n'}
-            <Text style={styles.heroHighlight}>
-              ao teu alcance.
-            </Text>
+            A tua cidade,{" \n"}
+            <Text style={styles.heroHighlight}>ao teu alcance.</Text>
           </Text>
 
           <Text style={styles.heroDescription}>
-            Viaja, envia encomendas, compra medicamentos
-            e recebe as tuas compras com o BWÉ Go.
-            Tudo numa única plataforma.
+            Viaja, envia encomendas, compra medicamentos e recebe as tuas
+            compras com o BWÉ Go. Tudo numa única plataforma.
           </Text>
-
-          <View style={styles.heroButtons}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={irParaLogin}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>
-                Iniciar sessão
-              </Text>
-
-              <Ionicons
-                name="arrow-forward"
-                size={19}
-                color="#FFFFFF"
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={irParaRegisto}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.secondaryButtonText}>
-                Criar conta
-              </Text>
-            </TouchableOpacity>
-          </View>
 
           {/* ILUSTRAÇÃO */}
 
@@ -381,27 +315,15 @@ export default function IndexScreen() {
             <View style={styles.circleBackground} />
 
             <View style={styles.carCircle}>
-              <Ionicons
-                name="car-sport"
-                size={105}
-                color="#F5A623"
-              />
+              <Ionicons name="car-sport" size={105} color="#F5A623" />
             </View>
 
             <View style={styles.deliveryIcon}>
-              <Ionicons
-                name="bicycle"
-                size={30}
-                color="#FFFFFF"
-              />
+              <Ionicons name="bicycle" size={30} color="#FFFFFF" />
             </View>
 
             <View style={styles.locationIllustrationIcon}>
-              <Ionicons
-                name="location"
-                size={26}
-                color="#FFFFFF"
-              />
+              <Ionicons name="location" size={26} color="#FFFFFF" />
             </View>
           </View>
         </View>
@@ -412,9 +334,7 @@ export default function IndexScreen() {
           <View style={styles.sectionTitleRow}>
             <View style={styles.sectionTitleIndicator} />
 
-            <Text style={styles.sectionTitle}>
-              Os nossos serviços
-            </Text>
+            <Text style={styles.sectionTitle}>Os nossos serviços</Text>
           </View>
 
           <Text style={styles.sectionDescription}>
@@ -424,34 +344,18 @@ export default function IndexScreen() {
 
         <View style={styles.servicesGrid}>
           {servicos.map((servico, index) => (
-            <View
-              key={index}
-              style={styles.serviceCard}
-            >
+            <View key={index} style={styles.serviceCard}>
               <View
-                style={[
-                  styles.serviceIcon,
-                  { backgroundColor: servico.cor },
-                ]}
+                style={[styles.serviceIcon, { backgroundColor: servico.cor }]}
               >
-                <Ionicons
-                  name={servico.icon}
-                  size={29}
-                  color="#173B70"
-                />
+                <Ionicons name={servico.icon} size={29} color="#173B70" />
               </View>
 
-              <Text style={styles.serviceCategory}>
-                {servico.categoria}
-              </Text>
+              <Text style={styles.serviceCategory}>{servico.categoria}</Text>
 
-              <Text style={styles.serviceTitle}>
-                {servico.titulo}
-              </Text>
+              <Text style={styles.serviceTitle}>{servico.titulo}</Text>
 
-              <Text style={styles.serviceDescription}>
-                {servico.descricao}
-              </Text>
+              <Text style={styles.serviceDescription}>{servico.descricao}</Text>
             </View>
           ))}
         </View>
@@ -463,9 +367,7 @@ export default function IndexScreen() {
             <View style={styles.sectionTitleRow}>
               <View style={styles.sectionTitleIndicator} />
 
-              <Text style={styles.sectionTitle}>
-                Escolhe como viajar
-              </Text>
+              <Text style={styles.sectionTitle}>Escolhe como viajar</Text>
             </View>
 
             <Text style={styles.sectionDescription}>
@@ -475,38 +377,25 @@ export default function IndexScreen() {
 
           <View style={styles.transportGrid}>
             {transportes.map((transporte, index) => (
-              <View
-                key={index}
-                style={styles.transportCard}
-              >
+              <View key={index} style={styles.transportCard}>
                 <View
                   style={[
                     styles.transportIcon,
                     { backgroundColor: transporte.cor },
                   ]}
                 >
-                  <Ionicons
-                    name={transporte.icon}
-                    size={26}
-                    color="#173B70"
-                  />
+                  <Ionicons name={transporte.icon} size={26} color="#173B70" />
                 </View>
 
                 <View style={styles.transportInfo}>
-                  <Text style={styles.transportTitle}>
-                    {transporte.titulo}
-                  </Text>
+                  <Text style={styles.transportTitle}>{transporte.titulo}</Text>
 
                   <Text style={styles.transportDescription}>
                     {transporte.descricao}
                   </Text>
                 </View>
 
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color="#B0B7C3"
-                />
+                <Ionicons name="chevron-forward" size={18} color="#B0B7C3" />
               </View>
             ))}
           </View>
@@ -515,9 +404,7 @@ export default function IndexScreen() {
         {/* VANTAGENS */}
 
         <View style={styles.benefitsSection}>
-          <Text style={styles.sectionTitle}>
-            Porque escolher o BWÉ Go?
-          </Text>
+          <Text style={styles.sectionTitle}>Porque escolher o BWÉ Go?</Text>
 
           <Text style={styles.sectionDescription}>
             Uma plataforma pensada para facilitar o teu dia a dia.
@@ -548,9 +435,7 @@ export default function IndexScreen() {
           <View style={styles.sectionTitleRow}>
             <View style={styles.sectionTitleIndicator} />
 
-            <Text style={styles.sectionTitle}>
-              O BWÉ Go em Angola
-            </Text>
+            <Text style={styles.sectionTitle}>O BWÉ Go em Angola</Text>
           </View>
 
           <Text style={styles.sectionDescription}>
@@ -558,33 +443,20 @@ export default function IndexScreen() {
           </Text>
 
           {provincias.map((provincia, index) => (
-            <View
-              key={index}
-              style={styles.provinceCard}
-            >
+            <View key={index} style={styles.provinceCard}>
               <View style={styles.provinceIcon}>
-                <Ionicons
-                  name={provincia.icon}
-                  size={24}
-                  color="#173B70"
-                />
+                <Ionicons name={provincia.icon} size={24} color="#173B70" />
               </View>
 
               <View style={styles.provinceInfo}>
-                <Text style={styles.provinceName}>
-                  {provincia.nome}
-                </Text>
+                <Text style={styles.provinceName}>{provincia.nome}</Text>
 
                 <Text style={styles.provinceDescription}>
                   {provincia.descricao}
                 </Text>
               </View>
 
-              <Ionicons
-                name="checkmark-circle"
-                size={20}
-                color="#E4AC13"
-              />
+              <Ionicons name="checkmark-circle" size={20} color="#E4AC13" />
             </View>
           ))}
         </View>
@@ -593,11 +465,7 @@ export default function IndexScreen() {
 
         <View style={styles.responsibilityCard}>
           <View style={styles.responsibilityIcon}>
-            <Ionicons
-              name="leaf-outline"
-              size={25}
-              color="#FFFFFF"
-            />
+            <Ionicons name="leaf-outline" size={25} color="#FFFFFF" />
           </View>
 
           <View style={styles.responsibilityContent}>
@@ -606,9 +474,9 @@ export default function IndexScreen() {
             </Text>
 
             <Text style={styles.responsibilityDescription}>
-              O BWÉ Go adopta uma política de não transporte e não entrega
-              de bebidas alcoólicas, promovendo a segurança e o bem-estar
-              da comunidade.
+              O BWÉ Go adopta uma política de não transporte e não entrega de
+              bebidas alcoólicas, promovendo a segurança e o bem-estar da
+              comunidade.
             </Text>
           </View>
         </View>
@@ -617,17 +485,13 @@ export default function IndexScreen() {
 
         <View style={styles.promotionCard}>
           <View style={styles.promotionContent}>
-            <Text style={styles.promotionLabel}>
-              BWÉ GO
-            </Text>
+            <Text style={styles.promotionLabel}>BWÉ GO</Text>
 
-            <Text style={styles.promotionTitle}>
-              A cidade move-se contigo!
-            </Text>
+            <Text style={styles.promotionTitle}>A cidade move-se contigo!</Text>
 
             <Text style={styles.promotionDescription}>
-              Simplificamos a tua mobilidade e as tuas entregas
-              num só aplicativo.
+              Simplificamos a tua mobilidade e as tuas entregas num só
+              aplicativo.
             </Text>
 
             <TouchableOpacity
@@ -635,15 +499,9 @@ export default function IndexScreen() {
               onPress={irParaRegisto}
               activeOpacity={0.8}
             >
-              <Text style={styles.promotionButtonText}>
-                Começar agora
-              </Text>
+              <Text style={styles.promotionButtonText}>Começar agora</Text>
 
-              <Ionicons
-                name="arrow-forward"
-                size={17}
-                color="#222222"
-              />
+              <Ionicons name="arrow-forward" size={17} color="#222222" />
             </TouchableOpacity>
           </View>
 
@@ -658,13 +516,11 @@ export default function IndexScreen() {
         {/* CHAMADA FINAL */}
 
         <View style={styles.bottomSection}>
-          <Text style={styles.bottomTitle}>
-            Ainda não tens uma conta?
-          </Text>
+          <Text style={styles.bottomTitle}>Ainda não tens uma conta?</Text>
 
           <Text style={styles.bottomDescription}>
-            Junta-te ao BWÉ Go e aproveita os nossos serviços
-            de mobilidade e logística.
+            Junta-te ao BWÉ Go e aproveita os nossos serviços de mobilidade e
+            logística.
           </Text>
 
           <TouchableOpacity
@@ -676,11 +532,7 @@ export default function IndexScreen() {
               Registar-se gratuitamente
             </Text>
 
-            <Ionicons
-              name="person-add-outline"
-              size={19}
-              color="#FFFFFF"
-            />
+            <Ionicons name="person-add-outline" size={19} color="#FFFFFF" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -689,10 +541,8 @@ export default function IndexScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.bottomLoginText}>
-              Já tens uma conta?{' '}
-              <Text style={styles.bottomLoginHighlight}>
-                Fazer login
-              </Text>
+              Já tens uma conta?{" "}
+              <Text style={styles.bottomLoginHighlight}>Fazer login</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -701,12 +551,10 @@ export default function IndexScreen() {
 
         <View style={styles.footerContainer}>
           <Text style={styles.footerLogo}>
-            BWÉ<Text style={{ color: '#E4AC13' }}>-GO</Text>
+            BWÉ<Text style={{ color: "#E4AC13" }}>-GO</Text>
           </Text>
 
-          <Text style={styles.footer}>
-            Mobilidade e logística em Angola.
-          </Text>
+          <Text style={styles.footer}>Mobilidade e logística em Angola.</Text>
 
           <Text style={styles.footerCopyright}>
             © {new Date().getFullYear()} BWÉ Go. Todos os direitos reservados.
@@ -725,21 +573,13 @@ function Benefit({ icon, title, description }) {
   return (
     <View style={styles.benefitItem}>
       <View style={styles.benefitIcon}>
-        <Ionicons
-          name={icon}
-          size={24}
-          color="#173B70"
-        />
+        <Ionicons name={icon} size={24} color="#173B70" />
       </View>
 
       <View style={styles.benefitInfo}>
-        <Text style={styles.benefitTitle}>
-          {title}
-        </Text>
+        <Text style={styles.benefitTitle}>{title}</Text>
 
-        <Text style={styles.benefitDescription}>
-          {description}
-        </Text>
+        <Text style={styles.benefitDescription}>{description}</Text>
       </View>
     </View>
   );
@@ -752,7 +592,7 @@ function Benefit({ icon, title, description }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
 
   scrollContent: {
@@ -761,40 +601,40 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 12,
     marginBottom: 20,
   },
 
   logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   logoIcon: {
     width: 43,
     height: 43,
     borderRadius: 13,
-    backgroundColor: '#173B70',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#173B70",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   logoText: {
     fontSize: 24,
-    fontWeight: '900',
+    fontWeight: "900",
     letterSpacing: 1,
     marginLeft: 9,
   },
 
   logoAzul: {
-    color: '#173B70',
+    color: "#173B70",
   },
 
   logoAmarelo: {
-    color: '#E4AC13',
+    color: "#E4AC13",
   },
 
   headerLogin: {
@@ -802,36 +642,36 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E4AC13',
+    borderColor: "#E4AC13",
   },
 
   headerLoginText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   // LOCALIZAÇÃO
 
   locationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F7F9FC',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F7F9FC",
     borderRadius: 15,
     padding: 14,
     marginBottom: 25,
     borderWidth: 1,
-    borderColor: '#E9EDF4',
+    borderColor: "#E9EDF4",
     gap: 11,
   },
 
   locationIcon: {
     width: 43,
     height: 43,
-    backgroundColor: '#E8EEFF',
+    backgroundColor: "#E8EEFF",
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   locationInfo: {
@@ -840,27 +680,27 @@ const styles = StyleSheet.create({
 
   locationTitle: {
     fontSize: 12,
-    color: '#8993A2',
-    fontWeight: '600',
+    color: "#8993A2",
+    fontWeight: "600",
     marginBottom: 5,
   },
 
   locationText: {
     fontSize: 12,
-    color: '#173B70',
-    fontWeight: '700',
+    color: "#173B70",
+    fontWeight: "700",
     marginTop: 3,
   },
 
   locationError: {
     fontSize: 11,
-    color: '#B45309',
+    color: "#B45309",
     lineHeight: 17,
   },
 
   loadingLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
 
@@ -871,37 +711,37 @@ const styles = StyleSheet.create({
   },
 
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFF5E5',
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#FFF5E5",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
   },
 
   badgeText: {
-    color: '#B8790C',
+    color: "#B8790C",
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 5,
   },
 
   heroTitle: {
     fontSize: 37,
-    fontWeight: '900',
-    color: '#173B70',
+    fontWeight: "900",
+    color: "#173B70",
     lineHeight: 45,
     marginTop: 23,
   },
 
   heroHighlight: {
-    color: '#E4AC13',
+    color: "#E4AC13",
   },
 
   heroDescription: {
     fontSize: 14,
-    color: '#777777',
+    color: "#777777",
     lineHeight: 23,
     marginTop: 13,
   },
@@ -913,60 +753,60 @@ const styles = StyleSheet.create({
 
   primaryButton: {
     height: 55,
-    backgroundColor: '#173B70',
+    backgroundColor: "#173B70",
     borderRadius: 13,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 12,
   },
 
   primaryButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
 
   secondaryButton: {
     height: 53,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: '#E4AC13',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#E4AC13",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   secondaryButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   illustration: {
     height: 230,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 20,
     marginBottom: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 
   circleBackground: {
     width: 210,
     height: 210,
     borderRadius: 105,
-    backgroundColor: '#FFF3DE',
-    position: 'absolute',
+    backgroundColor: "#FFF3DE",
+    position: "absolute",
   },
 
   carCircle: {
     width: 165,
     height: 165,
     borderRadius: 85,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 4,
   },
 
@@ -974,10 +814,10 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 18,
-    backgroundColor: '#173B70',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
+    backgroundColor: "#173B70",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
     right: 35,
     top: 20,
   },
@@ -986,10 +826,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#E4AC13',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
+    backgroundColor: "#E4AC13",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
     left: 35,
     bottom: 15,
   },
@@ -1002,27 +842,27 @@ const styles = StyleSheet.create({
   },
 
   sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   sectionTitleIndicator: {
     width: 5,
     height: 23,
     borderRadius: 5,
-    backgroundColor: '#E4AC13',
+    backgroundColor: "#E4AC13",
     marginRight: 9,
   },
 
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   sectionDescription: {
     fontSize: 12,
-    color: '#999999',
+    color: "#999999",
     marginTop: 7,
     lineHeight: 19,
   },
@@ -1030,19 +870,19 @@ const styles = StyleSheet.create({
   // SERVIÇOS
 
   servicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
 
   serviceCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
+    width: "48%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 14,
     marginBottom: 13,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: "#EEEEEE",
     elevation: 2,
     minHeight: 165,
   },
@@ -1051,28 +891,28 @@ const styles = StyleSheet.create({
     width: 51,
     height: 51,
     borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 10,
   },
 
   serviceCategory: {
     fontSize: 9,
-    color: '#B8790C',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
+    color: "#B8790C",
+    fontWeight: "bold",
+    textTransform: "uppercase",
     marginBottom: 4,
   },
 
   serviceTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   serviceDescription: {
     fontSize: 10,
-    color: '#999999',
+    color: "#999999",
     marginTop: 5,
     lineHeight: 15,
   },
@@ -1088,12 +928,12 @@ const styles = StyleSheet.create({
   },
 
   transportCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: "#EEEEEE",
     padding: 12,
     minHeight: 82,
   },
@@ -1102,8 +942,8 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   transportInfo: {
@@ -1114,13 +954,13 @@ const styles = StyleSheet.create({
 
   transportTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   transportDescription: {
     fontSize: 11,
-    color: '#999999',
+    color: "#999999",
     marginTop: 5,
     lineHeight: 16,
   },
@@ -1132,8 +972,8 @@ const styles = StyleSheet.create({
   },
 
   benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 17,
   },
 
@@ -1141,9 +981,9 @@ const styles = StyleSheet.create({
     width: 49,
     height: 49,
     borderRadius: 14,
-    backgroundColor: '#F0F4FA',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0F4FA",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   benefitInfo: {
@@ -1153,13 +993,13 @@ const styles = StyleSheet.create({
 
   benefitTitle: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   benefitDescription: {
     fontSize: 11,
-    color: '#999999',
+    color: "#999999",
     marginTop: 5,
     lineHeight: 17,
   },
@@ -1171,9 +1011,9 @@ const styles = StyleSheet.create({
   },
 
   provinceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FC',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FC",
     padding: 13,
     borderRadius: 14,
     marginTop: 10,
@@ -1183,9 +1023,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#E8EEFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#E8EEFF",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   provinceInfo: {
@@ -1195,22 +1035,22 @@ const styles = StyleSheet.create({
 
   provinceName: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   provinceDescription: {
     fontSize: 10,
-    color: '#999999',
+    color: "#999999",
     marginTop: 4,
   },
 
   // RESPONSABILIDADE
 
   responsibilityCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#173B70',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#173B70",
     borderRadius: 17,
     padding: 17,
     marginTop: 25,
@@ -1220,9 +1060,9 @@ const styles = StyleSheet.create({
     width: 43,
     height: 43,
     borderRadius: 12,
-    backgroundColor: '#31588C',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#31588C",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   responsibilityContent: {
@@ -1231,13 +1071,13 @@ const styles = StyleSheet.create({
   },
 
   responsibilityTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 
   responsibilityDescription: {
-    color: '#DCE5F2',
+    color: "#DCE5F2",
     fontSize: 11,
     lineHeight: 18,
     marginTop: 7,
@@ -1246,61 +1086,61 @@ const styles = StyleSheet.create({
   // PROMOÇÃO
 
   promotionCard: {
-    backgroundColor: '#E4AC13',
+    backgroundColor: "#E4AC13",
     borderRadius: 20,
     padding: 20,
     minHeight: 185,
     marginTop: 25,
-    overflow: 'hidden',
-    justifyContent: 'center',
+    overflow: "hidden",
+    justifyContent: "center",
   },
 
   promotionContent: {
-    width: '78%',
+    width: "78%",
     zIndex: 2,
   },
 
   promotionLabel: {
-    color: '#173B70',
+    color: "#173B70",
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 2,
   },
 
   promotionTitle: {
-    color: '#173B70',
+    color: "#173B70",
     fontSize: 21,
-    fontWeight: '900',
+    fontWeight: "900",
     marginTop: 9,
   },
 
   promotionDescription: {
-    color: '#49340E',
+    color: "#49340E",
     fontSize: 11,
     marginTop: 8,
     lineHeight: 17,
   },
 
   promotionButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 13,
     paddingVertical: 10,
     borderRadius: 10,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginTop: 15,
   },
 
   promotionButtonText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#173B70',
+    fontWeight: "bold",
+    color: "#173B70",
   },
 
   promotionIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: -12,
     bottom: 15,
     opacity: 0.25,
@@ -1309,44 +1149,44 @@ const styles = StyleSheet.create({
   // REGISTO
 
   bottomSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 35,
     padding: 20,
-    backgroundColor: '#F7F8FA',
+    backgroundColor: "#F7F8FA",
     borderRadius: 18,
   },
 
   bottomTitle: {
     fontSize: 17,
-    fontWeight: 'bold',
-    color: '#173B70',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#173B70",
+    textAlign: "center",
   },
 
   bottomDescription: {
     fontSize: 12,
-    color: '#888888',
-    textAlign: 'center',
+    color: "#888888",
+    textAlign: "center",
     lineHeight: 19,
     marginTop: 8,
   },
 
   registerButton: {
-    width: '100%',
+    width: "100%",
     height: 52,
-    backgroundColor: '#173B70',
+    backgroundColor: "#173B70",
     borderRadius: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 10,
     marginTop: 18,
   },
 
   registerButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 
   bottomLogin: {
@@ -1355,39 +1195,39 @@ const styles = StyleSheet.create({
 
   bottomLoginText: {
     fontSize: 12,
-    color: '#777777',
+    color: "#777777",
   },
 
   bottomLoginHighlight: {
-    color: '#D99012',
-    fontWeight: 'bold',
+    color: "#D99012",
+    fontWeight: "bold",
   },
 
   // RODAPÉ
 
   footerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 30,
   },
 
   footerLogo: {
-    color: '#173B70',
+    color: "#173B70",
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
     letterSpacing: 1,
   },
 
   footer: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 11,
-    color: '#888888',
+    color: "#888888",
     marginTop: 7,
   },
 
   footerCopyright: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 9,
-    color: '#AAAAAA',
+    color: "#AAAAAA",
     marginTop: 7,
   },
 });

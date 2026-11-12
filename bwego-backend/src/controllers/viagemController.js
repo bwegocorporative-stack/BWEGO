@@ -509,6 +509,180 @@ exports.listar = async (req, res) => {
     }
 };
 
+exports.listarDisponiveis = async (req, res) => {
+    const usuarioId = Number(req.user?.id);
+    const raioKm = req.query.raio_km === undefined
+        ? 10
+        : Number(req.query.raio_km);
+
+    if (!Number.isSafeInteger(usuarioId) || usuarioId < 1) {
+        return res.status(401).json({
+            sucesso: false,
+            mensagem: 'Utilizador não autenticado.'
+        });
+    }
+    if (!Number.isFinite(raioKm) || raioKm < 1 || raioKm > 20) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: 'O raio de pesquisa deve estar entre 1 e 20 km.'
+        });
+    }
+
+    try {
+        const [motoristas] = await mysql.execute(
+            `SELECT id, estado_aprovacao, disponibilidade, latitude, longitude,
+                    localizacao_atualizada_em,
+                    (
+                        localizacao_atualizada_em IS NOT NULL
+                        AND localizacao_atualizada_em >= DATE_SUB(
+                            CURRENT_TIMESTAMP,
+                            INTERVAL 90 SECOND
+                        )
+                    ) AS localizacao_recente
+             FROM motoristas
+             WHERE usuario_id = ?
+             LIMIT 1`,
+            [usuarioId]
+        );
+        if (!motoristas.length || motoristas[0].estado_aprovacao !== 'aprovado') {
+            return res.status(403).json({
+                sucesso: false,
+                mensagem: 'Apenas motoristas aprovados podem consultar pedidos.'
+            });
+        }
+
+        const motorista = motoristas[0];
+        if (
+            motorista.disponibilidade !== 'disponivel' ||
+            motorista.latitude === null ||
+            motorista.longitude === null ||
+            !motorista.localizacao_recente
+        ) {
+            return res.status(200).json({ sucesso: true, pedidos: [] });
+        }
+
+        const latitude = Number(motorista.latitude);
+        const longitude = Number(motorista.longitude);
+        const deltaLatitude = raioKm / 110.574;
+        const cosLatitude = Math.max(
+            Math.abs(Math.cos(latitude * Math.PI / 180)),
+            0.01
+        );
+        const deltaLongitude = raioKm / (111.32 * cosLatitude);
+        const [pedidos] = await mysql.execute(
+            `SELECT
+                proximos.id,
+                proximos.passageiro_nome,
+                proximos.origem_nome,
+                proximos.origem_endereco,
+                proximos.origem_latitude,
+                proximos.origem_longitude,
+                proximos.destino_nome,
+                proximos.destino_endereco,
+                proximos.destino_latitude,
+                proximos.destino_longitude,
+                proximos.distancia_km,
+                proximos.duracao_estimada_minutos,
+                proximos.categoria,
+                proximos.numero_passageiros,
+                proximos.preco_estimado,
+                proximos.metodo_pagamento,
+                proximos.data_solicitacao,
+                proximos.distancia_motorista_km
+             FROM (
+                SELECT
+                    v.id,
+                    u.nome AS passageiro_nome,
+                    v.origem_nome,
+                    v.origem_endereco,
+                    v.origem_latitude,
+                    v.origem_longitude,
+                    v.destino_nome,
+                    v.destino_endereco,
+                    v.destino_latitude,
+                    v.destino_longitude,
+                    v.distancia_km,
+                    v.duracao_estimada_minutos,
+                    v.categoria,
+                    v.numero_passageiros,
+                    v.preco_estimado,
+                    v.metodo_pagamento,
+                    v.data_solicitacao,
+                    6371 * ACOS(LEAST(1, GREATEST(-1,
+                        SIN(RADIANS(?)) * SIN(RADIANS(v.origem_latitude)) +
+                        COS(RADIANS(?)) * COS(RADIANS(v.origem_latitude)) *
+                        COS(RADIANS(v.origem_longitude) - RADIANS(?))
+                    ))) AS distancia_motorista_km
+                FROM viagens v
+                INNER JOIN usuarios u ON u.id = v.usuario_id
+                WHERE v.motorista_id IS NULL
+                  AND v.tipo_viagem = 'imediata'
+                  AND v.estado = 'procurando_motorista'
+                  AND u.ativo = TRUE
+                  AND v.origem_latitude BETWEEN ? AND ?
+                  AND v.origem_longitude BETWEEN ? AND ?
+             ) AS proximos
+             WHERE proximos.distancia_motorista_km <= ?
+             ORDER BY proximos.distancia_motorista_km ASC,
+                      proximos.data_solicitacao ASC
+             LIMIT 25`,
+            [
+                latitude,
+                latitude,
+                longitude,
+                Math.max(-90, latitude - deltaLatitude),
+                Math.min(90, latitude + deltaLatitude),
+                Math.max(-180, longitude - deltaLongitude),
+                Math.min(180, longitude + deltaLongitude),
+                raioKm
+            ]
+        );
+
+        return res.status(200).json({ sucesso: true, pedidos });
+    } catch (erro) {
+        return respostaErro(res, erro, 'Erro ao consultar pedidos próximos.');
+    }
+};
+
+exports.obterAtiva = async (req, res) => {
+    const usuarioId = Number(req.user?.id);
+    if (!Number.isSafeInteger(usuarioId) || usuarioId < 1) {
+        return res.status(401).json({
+            sucesso: false,
+            mensagem: 'Utilizador não autenticado.'
+        });
+    }
+
+    try {
+        const [viagens] = await mysql.execute(
+            `SELECT
+                v.*,
+                u.nome AS passageiro_nome,
+                u.telefone AS passageiro_telefone,
+                u.foto_url AS passageiro_foto_url
+             FROM viagens v
+             INNER JOIN motoristas m ON m.id = v.motorista_id
+             INNER JOIN usuarios u ON u.id = v.usuario_id
+             WHERE m.usuario_id = ?
+               AND v.estado IN (
+                   'aceite',
+                   'motorista_a_caminho',
+                   'motorista_chegou',
+                   'em_andamento'
+               )
+             ORDER BY v.data_aceite DESC, v.id DESC
+             LIMIT 1`,
+            [usuarioId]
+        );
+        return res.status(200).json({
+            sucesso: true,
+            viagem: viagens[0] || null
+        });
+    } catch (erro) {
+        return respostaErro(res, erro, 'Erro ao consultar a viagem ativa.');
+    }
+};
+
 // =====================================================
 // 3. BUSCAR VIAGEM POR ID
 // =====================================================

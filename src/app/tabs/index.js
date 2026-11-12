@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -106,17 +106,14 @@ export default function HomeScreen() {
       setErroLocalizacao("");
 
       // Solicitar autorização para aceder à localização
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
-        setErroLocalizacao(
-          "Permissão de localização não concedida."
-        );
+        setErroLocalizacao("Permissão de localização não concedida.");
 
         Alert.alert(
           "Localização necessária",
-          "Permite o acesso à localização para identificarmos a tua província, município e país."
+          "Permite o acesso à localização para identificarmos a tua província, município e país.",
         );
 
         return;
@@ -143,9 +140,7 @@ export default function HomeScreen() {
 
       // Extrair os dados disponibilizados pelo serviço
       const provincia =
-        endereco.region ||
-        endereco.subregion ||
-        "Não identificada";
+        endereco.region || endereco.subregion || "Não identificada";
 
       const municipio =
         endereco.subregion ||
@@ -153,9 +148,7 @@ export default function HomeScreen() {
         endereco.district ||
         "Não identificado";
 
-      const pais =
-        endereco.country ||
-        "Não identificado";
+      const pais = endereco.country || "Não identificado";
 
       setLocalizacao({
         provincia,
@@ -165,9 +158,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.log("Erro ao obter localização:", error);
 
-      setErroLocalizacao(
-        "Não foi possível obter a localização."
-      );
+      setErroLocalizacao("Não foi possível obter a localização.");
     } finally {
       setACarregarLocalizacao(false);
     }
@@ -210,7 +201,7 @@ export default function HomeScreen() {
           } else {
             Alert.alert(
               "Perfil indisponível",
-              error.message || "Não foi possível carregar os teus dados."
+              error.message || "Não foi possível carregar os teus dados.",
             );
           }
         }
@@ -220,17 +211,14 @@ export default function HomeScreen() {
       return () => {
         ativo = false;
       };
-    }, [])
+    }, []),
   );
 
   const primeiroNome = usuario?.nome?.trim().split(/\s+/)[0];
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="#173B70"
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#173B70" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -241,7 +229,7 @@ export default function HomeScreen() {
           <View style={styles.headerTop}>
             <View>
               <Text style={styles.greeting}>
-                Olá, {primeiroNome || "bem-vindo"} 👋
+                Olá, {primeiroNome || "bem-vindo"}
               </Text>
 
               <Text style={styles.logo}>
@@ -276,24 +264,15 @@ export default function HomeScreen() {
             disabled={aCarregarLocalizacao}
           >
             <View style={styles.locationIcon}>
-              <Ionicons
-                name="location"
-                size={21}
-                color="#F5B51B"
-              />
+              <Ionicons name="location" size={21} color="#F5B51B" />
             </View>
 
             <View style={styles.locationInfo}>
-              <Text style={styles.locationLabel}>
-                A tua localização actual
-              </Text>
+              <Text style={styles.locationLabel}>A tua localização actual</Text>
 
               {aCarregarLocalizacao ? (
                 <View style={styles.locationLoading}>
-                  <ActivityIndicator
-                    size="small"
-                    color="#F5B51B"
-                  />
+                  <ActivityIndicator size="small" color="#F5B51B" />
 
                   <Text style={styles.locationLoadingText}>
                     A identificar localização...
@@ -322,11 +301,7 @@ export default function HomeScreen() {
               )}
             </View>
 
-            <Ionicons
-              name="refresh-outline"
-              size={19}
-              color="#FFFFFF"
-            />
+            <Ionicons name="refresh-outline" size={19} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -336,35 +311,21 @@ export default function HomeScreen() {
           onPress={() => navegar("/tabs/viagens")}
           activeOpacity={0.8}
         >
-          <Ionicons
-            name="search"
-            size={22}
-            color="#173B70"
-          />
+          <Ionicons name="search" size={22} color="#173B70" />
 
-          <Text style={styles.searchText}>
-            Para onde vamos?
-          </Text>
+          <Text style={styles.searchText}>Para onde vamos?</Text>
 
           <View style={styles.searchArrow}>
-            <Ionicons
-              name="arrow-forward"
-              size={19}
-              color="#173B70"
-            />
+            <Ionicons name="arrow-forward" size={19} color="#173B70" />
           </View>
         </TouchableOpacity>
 
         {/* BANNER */}
         <View style={styles.banner}>
           <View style={styles.bannerContent}>
-            <Text style={styles.bannerTag}>
-              BWÉ GO
-            </Text>
+            <Text style={styles.bannerTag}>BWÉ GO</Text>
 
-            <Text style={styles.bannerTitle}>
-              A cidade move-se contigo!
-            </Text>
+            <Text style={styles.bannerTitle}>A cidade move-se contigo!</Text>
 
             <Text style={styles.bannerSubtitle}>
               Viaja, compra e recebe tudo num só lugar.
@@ -374,43 +335,27 @@ export default function HomeScreen() {
               style={styles.bannerButton}
               onPress={() => navegar("/tabs/viagens")}
             >
-              <Text style={styles.bannerButtonText}>
-                Pedir uma viagem
-              </Text>
+              <Text style={styles.bannerButtonText}>Pedir uma viagem</Text>
 
-              <Ionicons
-                name="arrow-forward"
-                size={17}
-                color="#173B70"
-              />
+              <Ionicons name="arrow-forward" size={17} color="#173B70" />
             </TouchableOpacity>
           </View>
 
-          <Ionicons
-            name="car-sport"
-            size={78}
-            color="#FFFFFF"
-          />
+          <Ionicons name="car-sport" size={78} color="#FFFFFF" />
         </View>
 
         {/* SERVIÇOS PRINCIPAIS */}
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>
-              Os nossos serviços
-            </Text>
+            <Text style={styles.sectionTitle}>Os nossos serviços</Text>
 
             <Text style={styles.sectionSubtitle}>
               Tudo o que precisas num só lugar.
             </Text>
           </View>
 
-          <TouchableOpacity
-            onPress={() => navegar("/tabs/pedidos")}
-          >
-            <Text style={styles.seeAll}>
-              Ver todos
-            </Text>
+          <TouchableOpacity onPress={() => navegar("/tabs/pedidos")}>
+            <Text style={styles.seeAll}>Ver todos</Text>
           </TouchableOpacity>
         </View>
 
@@ -423,32 +368,17 @@ export default function HomeScreen() {
               onPress={() => navegar(service.route)}
             >
               <View
-                style={[
-                  styles.serviceIcon,
-                  { backgroundColor: service.color },
-                ]}
+                style={[styles.serviceIcon, { backgroundColor: service.color }]}
               >
-                <Ionicons
-                  name={service.icon}
-                  size={29}
-                  color="#173B70"
-                />
+                <Ionicons name={service.icon} size={29} color="#173B70" />
               </View>
 
-              <Text style={styles.serviceTitle}>
-                {service.title}
-              </Text>
+              <Text style={styles.serviceTitle}>{service.title}</Text>
 
-              <Text style={styles.serviceSubtitle}>
-                {service.subtitle}
-              </Text>
+              <Text style={styles.serviceSubtitle}>{service.subtitle}</Text>
 
               <View style={styles.cardArrow}>
-                <Ionicons
-                  name="arrow-forward"
-                  size={15}
-                  color="#173B70"
-                />
+                <Ionicons name="arrow-forward" size={15} color="#173B70" />
               </View>
             </TouchableOpacity>
           ))}
@@ -457,9 +387,7 @@ export default function HomeScreen() {
         {/* MODALIDADES DE TRANSPORTE */}
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>
-              Escolhe a tua viagem
-            </Text>
+            <Text style={styles.sectionTitle}>Escolhe a tua viagem</Text>
 
             <Text style={styles.sectionSubtitle}>
               Diferentes opções para cada necessidade.
@@ -476,43 +404,25 @@ export default function HomeScreen() {
               onPress={() => navegar("/tabs/viagens")}
             >
               <View style={styles.transportIcon}>
-                <Ionicons
-                  name={item.icon}
-                  size={25}
-                  color="#173B70"
-                />
+                <Ionicons name={item.icon} size={25} color="#173B70" />
               </View>
 
               <View style={styles.transportInfo}>
-                <Text style={styles.transportTitle}>
-                  {item.title}
-                </Text>
+                <Text style={styles.transportTitle}>{item.title}</Text>
 
-                <Text style={styles.transportSubtitle}>
-                  {item.subtitle}
-                </Text>
+                <Text style={styles.transportSubtitle}>{item.subtitle}</Text>
               </View>
 
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color="#9AA5B5"
-              />
+              <Ionicons name="chevron-forward" size={18} color="#9AA5B5" />
             </TouchableOpacity>
           ))}
         </View>
 
         {/* DESTINOS RECENTES */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Destinos recentes
-          </Text>
+          <Text style={styles.sectionTitle}>Destinos recentes</Text>
 
-          <Ionicons
-            name="time-outline"
-            size={21}
-            color="#173B70"
-          />
+          <Ionicons name="time-outline" size={21} color="#173B70" />
         </View>
 
         <TouchableOpacity
@@ -520,28 +430,16 @@ export default function HomeScreen() {
           onPress={() => navegar("/tabs/viagens")}
         >
           <View style={styles.destinationIcon}>
-            <Ionicons
-              name="location-outline"
-              size={23}
-              color="#173B70"
-            />
+            <Ionicons name="location-outline" size={23} color="#173B70" />
           </View>
 
           <View style={styles.destinationInfo}>
-            <Text style={styles.destinationTitle}>
-              Talatona
-            </Text>
+            <Text style={styles.destinationTitle}>Talatona</Text>
 
-            <Text style={styles.smallText}>
-              Luanda, Angola
-            </Text>
+            <Text style={styles.smallText}>Luanda, Angola</Text>
           </View>
 
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color="#9AA5B5"
-          />
+          <Ionicons name="chevron-forward" size={20} color="#9AA5B5" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -549,37 +447,21 @@ export default function HomeScreen() {
           onPress={() => navegar("/tabs/viagens")}
         >
           <View style={styles.destinationIcon}>
-            <Ionicons
-              name="location-outline"
-              size={23}
-              color="#173B70"
-            />
+            <Ionicons name="location-outline" size={23} color="#173B70" />
           </View>
 
           <View style={styles.destinationInfo}>
-            <Text style={styles.destinationTitle}>
-              Maianga
-            </Text>
+            <Text style={styles.destinationTitle}>Maianga</Text>
 
-            <Text style={styles.smallText}>
-              Luanda, Angola
-            </Text>
+            <Text style={styles.smallText}>Luanda, Angola</Text>
           </View>
 
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color="#9AA5B5"
-          />
+          <Ionicons name="chevron-forward" size={20} color="#9AA5B5" />
         </TouchableOpacity>
 
         {/* SEGURANÇA */}
         <View style={styles.securityBanner}>
-          <Ionicons
-            name="shield-checkmark"
-            size={25}
-            color="#173B70"
-          />
+          <Ionicons name="shield-checkmark" size={25} color="#173B70" />
 
           <View style={styles.securityInfo}>
             <Text style={styles.securityTitle}>
@@ -601,8 +483,8 @@ export default function HomeScreen() {
           />
 
           <Text style={styles.policyText}>
-            O BWÉ Go não permite o transporte ou a entrega de bebidas
-            alcoólicas através dos seus serviços.
+            O BWÉ Go não permite o transporte ou a entrega de bebidas alcoólicas
+            através dos seus serviços.
           </Text>
         </View>
 
@@ -616,9 +498,7 @@ export default function HomeScreen() {
             Mobilidade e logística integrada em Angola.
           </Text>
 
-          <Text style={styles.version}>
-            Versão 1.0
-          </Text>
+          <Text style={styles.version}>Versão 1.0</Text>
         </View>
       </ScrollView>
     </View>

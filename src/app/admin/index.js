@@ -44,6 +44,7 @@ import {
   obterDashboardAdmin,
   listarGestoresAdmin,
   criarGestorAdmin,
+  atualizarGestorAdmin,
   removerGestorAdmin,
   removerParceiroAdmin,
   removerProdutoAdmin,
@@ -120,6 +121,12 @@ const CAMPOS_EDICAO = {
   categorias: [
     { key: "nome", label: "Nome da categoria" },
     { key: "descricao", label: "Descrição", multiline: true },
+  ],
+  gestores: [
+    { key: "nome", label: "Nome completo" },
+    { key: "email", label: "Email", keyboardType: "email-address" },
+    { key: "telefone", label: "Telefone", keyboardType: "phone-pad" },
+    { key: "funcao", label: "Função" },
   ],
 };
 
@@ -294,7 +301,8 @@ export default function AdminScreen() {
   const [pesquisa, setPesquisa] = useState("");
   const [pesquisaAplicada, setPesquisaAplicada] = useState("");
   const [carregando, setCarregando] = useState(true);
-  const [adminAtualId, setAdminAtualId] = useState(null);
+  const [tipoConta, setTipoConta] = useState(null);
+  const isGestor = tipoConta === "gestor";
   const [erro, setErro] = useState("");
   const [erroLogout, setErroLogout] = useState("");
   const [sucessoConfiguracoes, setSucessoConfiguracoes] = useState("");
@@ -311,6 +319,7 @@ export default function AdminScreen() {
   const [aTerminarSessao, setATerminarSessao] = useState(false);
   const [aAtualizarId, setAAtualizarId] = useState(null);
   const [registoEmEdicao, setRegistoEmEdicao] = useState(null);
+  const [erroEdicao, setErroEdicao] = useState("");
   const [registoEmRemocao, setRegistoEmRemocao] = useState(null);
   const [motoristaEmAprovacao, setMotoristaEmAprovacao] = useState(null);
   const [aRemoverRegisto, setARemoverRegisto] = useState(false);
@@ -319,6 +328,7 @@ export default function AdminScreen() {
   const [aGuardarEdicao, setAGuardarEdicao] = useState(false);
   const [tipoCriacao, setTipoCriacao] = useState(null);
   const [dadosCriacao, setDadosCriacao] = useState({});
+  const [erroCriacao, setErroCriacao] = useState("");
   const [parceirosDisponiveis, setParceirosDisponiveis] = useState([]);
   const [categoriasDisponiveis, setCategoriasDisponiveis] = useState([]);
   const [aCarregarParceiros, setACarregarParceiros] = useState(false);
@@ -382,6 +392,7 @@ export default function AdminScreen() {
 
   const abrirEdicao = (registo) => {
     setRegistoEmEdicao(registo);
+    setErroEdicao("");
     setImagemPerfil(null);
     setDadosEdicao(
       Object.fromEntries(
@@ -395,6 +406,7 @@ export default function AdminScreen() {
 
   const guardarEdicao = async () => {
     if (!registoEmEdicao) return;
+    setErroEdicao("");
     const campos = CAMPOS_EDICAO[secao] || CAMPOS_EDICAO.motoristas;
     const dadosAlterados = Object.fromEntries(
       campos
@@ -408,10 +420,15 @@ export default function AdminScreen() {
     );
     const editaImagemParceiro =
       secao === "parceiros" || secao === "farmacias";
+    const editaImagemPessoa =
+      (secao === "clientes" || secao === "motoristas" || secao === "aprovacoes") &&
+      Boolean(imagemPerfil);
     const editaImagemProduto = secao === "produtos" && Boolean(imagemPerfil);
     if (
       !Object.keys(dadosAlterados).length &&
+      !editaImagemPessoa &&
       !(editaImagemParceiro && imagemPerfil) &&
+      !(secao === "gestores" && imagemPerfil) &&
       !editaImagemProduto
     ) {
       setRegistoEmEdicao(null);
@@ -421,9 +438,9 @@ export default function AdminScreen() {
     setAGuardarEdicao(true);
     try {
       if (secao === "clientes") {
-        await atualizarClienteAdmin(registoEmEdicao.id, dadosAlterados);
+        await atualizarClienteAdmin(registoEmEdicao.id, dadosAlterados, imagemPerfil);
       } else if (secao === "motoristas" || secao === "aprovacoes") {
-        await atualizarMotoristaAdmin(registoEmEdicao.id, dadosAlterados);
+        await atualizarMotoristaAdmin(registoEmEdicao.id, dadosAlterados, imagemPerfil);
       } else if (secao === "parceiros" || secao === "farmacias") {
         await atualizarParceiroAdmin(
           registoEmEdicao.id,
@@ -436,6 +453,12 @@ export default function AdminScreen() {
           nome_atual: registoEmEdicao.nome,
           ...dadosAlterados,
         });
+      } else if (secao === "gestores") {
+        await atualizarGestorAdmin(
+          registoEmEdicao.id,
+          dadosEdicao,
+          imagemPerfil
+        );
       } else {
         await atualizarProdutoAdmin(registoEmEdicao.id, dadosAlterados, imagemPerfil);
       }
@@ -443,7 +466,11 @@ export default function AdminScreen() {
       setImagemPerfil(null);
       await carregarDados();
     } catch (error) {
-      Alert.alert("Não foi possível guardar", error.message);
+      if (Platform.OS === "web") {
+        setErroEdicao(error.message || "Não foi possível guardar as alterações.");
+      } else {
+        Alert.alert("Não foi possível guardar", error.message);
+      }
     } finally {
       setAGuardarEdicao(false);
     }
@@ -474,8 +501,15 @@ export default function AdminScreen() {
     }
   };
 
+  const confirmarRemocaoGestor = (gestor) => {
+    setRegistoEmEdicao(null);
+    setTipoCriacao(null);
+    setRegistoEmRemocao({ tipo: "gestor", item: gestor });
+  };
+
   const abrirCriacao = async (tipo) => {
     setTipoCriacao(tipo);
+    setErroCriacao("");
     setImagemPerfil(null);
     setDadosCriacao(
       tipo === "produto"
@@ -505,23 +539,28 @@ export default function AdminScreen() {
 
   const criarRegisto = async () => {
     const farmacia = tipoCriacao === "farmacia";
+    setErroCriacao("");
     if (tipoCriacao === "gestor") {
       if (
         !dadosCriacao.nome?.trim() ||
         !dadosCriacao.email?.trim() ||
         !dadosCriacao.telefone?.trim() ||
+        !dadosCriacao.funcao?.trim() ||
         !dadosCriacao.senha ||
-        !dadosCriacao.confirmarSenha
+        !dadosCriacao.confirmarSenha ||
+        !imagemPerfil
       ) {
-        Alert.alert("Campos obrigatórios", "Preenche todos os dados do novo gestor.");
+        setErroCriacao(
+          "Preenche nome, email, telefone, função, palavra-passe e seleciona uma foto."
+        );
         return;
       }
-      if (dadosCriacao.senha.length < 12) {
-        Alert.alert("Palavra-passe inválida", "A palavra-passe deve ter pelo menos 12 caracteres.");
+      if (dadosCriacao.senha.length < 8) {
+        setErroCriacao("A palavra-passe deve ter pelo menos 8 caracteres.");
         return;
       }
       if (dadosCriacao.senha !== dadosCriacao.confirmarSenha) {
-        Alert.alert("Palavras-passe diferentes", "Confirma a palavra-passe corretamente.");
+        setErroCriacao("As palavras-passe não coincidem.");
         return;
       }
     }
@@ -579,7 +618,7 @@ export default function AdminScreen() {
           descricao: dadosCriacao.descricao,
         });
       } else if (tipoCriacao === "gestor") {
-        await criarGestorAdmin(dadosCriacao);
+        await criarGestorAdmin(dadosCriacao, imagemPerfil);
       } else {
         await criarParceiroAdmin(
           dadosCriacao,
@@ -590,20 +629,22 @@ export default function AdminScreen() {
       setTipoCriacao(null);
       setImagemPerfil(null);
       await carregarDados();
-      Alert.alert(
-        "Registo criado",
-        tipoCriacao === "gestor"
-          ? "O gestor foi adicionado com sucesso."
-          : tipoCriacao === "produto"
+      if (Platform.OS !== "web") {
+        Alert.alert(
+          "Registo criado",
+          tipoCriacao === "gestor"
+            ? "O gestor foi adicionado com sucesso."
+            : tipoCriacao === "produto"
           ? "O produto foi adicionado com sucesso."
           : tipoCriacao === "categoria"
             ? "A categoria foi adicionada com sucesso."
             : farmacia
               ? "A farmácia foi adicionada com sucesso."
               : "O parceiro foi adicionado com sucesso."
-      );
+        );
+      }
     } catch (error) {
-      Alert.alert("Não foi possível adicionar", error.message);
+      setErroCriacao(error.message || "Não foi possível adicionar o registo.");
     } finally {
       setACriarRegisto(false);
     }
@@ -634,18 +675,25 @@ export default function AdminScreen() {
       const verificarAdministrador = async () => {
         const usuario = await obterUsuario();
         if (!ativo) return;
-        if (usuario?.tipo !== "admin") {
+        if (!["admin", "gestor"].includes(usuario?.tipo)) {
           router.replace(Platform.OS === "web" ? "/admin/login" : "/login");
           return;
         }
-        setAdminAtualId(usuario.id);
+        setTipoConta(usuario.tipo);
+        if (
+          usuario.tipo === "gestor" &&
+          ["gestores", "configuracoes"].includes(secao)
+        ) {
+          setSecao("dashboard");
+          return;
+        }
         await carregarDados();
       };
       void verificarAdministrador();
       return () => {
         ativo = false;
       };
-    }, [carregarDados])
+    }, [carregarDados, secao])
   );
 
   const terminar = () => {
@@ -981,6 +1029,7 @@ export default function AdminScreen() {
       item.disponibilidade ??
       (item.ativo === undefined ? item.estado : item.ativo ? "ativo" : "inativo");
     const subtitulo =
+      item.funcao ||
       item.email ||
       item.telefone ||
       item.tipo_empresa ||
@@ -1063,7 +1112,7 @@ export default function AdminScreen() {
                 </TouchableOpacity>
               </View>
             )}
-            <TouchableOpacity
+            {!isGestor && <TouchableOpacity
               style={styles.editButton}
               onPress={() => abrirEdicao(item)}
               disabled={aAtualizarId === String(item.id)}
@@ -1072,7 +1121,7 @@ export default function AdminScreen() {
             >
               <Ionicons name="create-outline" size={17} color="#173B70" />
               <Text style={styles.editButtonText}>Editar dados</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>}
           </View>
         ) : null}
 
@@ -1081,7 +1130,7 @@ export default function AdminScreen() {
             <Text style={styles.recordDetail}>
               Registado em {formatarData(item.criado_em)}
             </Text>
-            <TouchableOpacity
+            {!isGestor && <TouchableOpacity
               style={styles.editButton}
               onPress={() => abrirEdicao(item)}
               disabled={aGuardarEdicao || aRemoverRegisto}
@@ -1090,16 +1139,27 @@ export default function AdminScreen() {
             >
               <Ionicons name="create-outline" size={17} color="#173B70" />
               <Text style={styles.editButtonText}>Editar cliente</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>}
           </View>
         )}
 
-        {secao === "gestores" && (
+        {secao === "gestores" && !isGestor && (
           <View style={styles.recordActions}>
-            {Number(item.ativo) === 1 && String(item.id) !== String(adminAtualId) ? (
+            {Number(item.ativo) === 1 ? (
+              <>
+              <TouchableOpacity
+                style={[styles.recordActionButton, styles.recordEditAction]}
+                onPress={() => abrirEdicao(item)}
+                disabled={aRemoverRegisto}
+                accessibilityRole="button"
+                accessibilityLabel={`Editar gestor ${item.nome}`}
+              >
+                <Ionicons name="create-outline" size={16} color="#173B70" />
+                <Text style={styles.recordEditActionText}>Editar gestor</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.recordActionButton, styles.recordDeleteAction]}
-                onPress={() => setRegistoEmRemocao({ tipo: "gestor", item })}
+                onPress={() => confirmarRemocaoGestor(item)}
                 disabled={aRemoverRegisto}
                 accessibilityRole="button"
                 accessibilityLabel={`Remover gestor ${item.nome}`}
@@ -1107,8 +1167,7 @@ export default function AdminScreen() {
                 <Ionicons name="person-remove-outline" size={16} color="#B42318" />
                 <Text style={styles.recordDeleteActionText}>Remover gestor</Text>
               </TouchableOpacity>
-            ) : String(item.id) === String(adminAtualId) ? (
-              <Text style={styles.managerSelfLabel}>A tua conta</Text>
+              </>
             ) : (
               <Text style={styles.managerInactiveLabel}>Conta desativada</Text>
             )}
@@ -1117,25 +1176,29 @@ export default function AdminScreen() {
 
         {secao === "categorias" && (
           <View style={styles.recordActions}>
-            <TouchableOpacity
-              style={[styles.recordActionButton, styles.recordEditAction]}
-              onPress={() => abrirEdicao(item)}
-              disabled={aGuardarEdicao || aRemoverRegisto}
-              accessibilityRole="button"
-            >
-              <Ionicons name="create-outline" size={16} color="#173B70" />
-              <Text style={styles.recordEditActionText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.recordActionButton, styles.recordDeleteAction]}
-              onPress={() => setRegistoEmRemocao({ tipo: "categoria", item })}
-              disabled={aRemoverRegisto}
-              accessibilityRole="button"
-              accessibilityLabel={`Excluir categoria ${item.nome}`}
-            >
-              <Ionicons name="trash-outline" size={16} color="#B42318" />
-              <Text style={styles.recordDeleteActionText}>Excluir</Text>
-            </TouchableOpacity>
+            {!isGestor && (
+              <>
+                <TouchableOpacity
+                  style={[styles.recordActionButton, styles.recordEditAction]}
+                  onPress={() => abrirEdicao(item)}
+                  disabled={aGuardarEdicao || aRemoverRegisto}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="create-outline" size={16} color="#173B70" />
+                  <Text style={styles.recordEditActionText}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.recordActionButton, styles.recordDeleteAction]}
+                  onPress={() => setRegistoEmRemocao({ tipo: "categoria", item })}
+                  disabled={aRemoverRegisto}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Excluir categoria ${item.nome}`}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#B42318" />
+                  <Text style={styles.recordDeleteActionText}>Excluir</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         )}
 
@@ -1145,27 +1208,31 @@ export default function AdminScreen() {
               {[item.municipio, item.provincia].filter(Boolean).join(", ") || item.endereco || "Localização não indicada"}
             </Text>
             <View style={styles.recordActions}>
-              <TouchableOpacity
-                style={[styles.recordActionButton, styles.recordEditAction]}
-                onPress={() => abrirEdicao(item)}
-                disabled={aAtualizarId === String(item.id) || aRemoverRegisto}
-                accessibilityRole="button"
-              >
-                <Ionicons name="create-outline" size={16} color="#173B70" />
-                <Text style={styles.recordEditActionText}>Editar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.recordActionButton, styles.recordDeleteAction]}
-                onPress={() => setRegistoEmRemocao({ tipo: "estabelecimento", item })}
-                disabled={aAtualizarId === String(item.id) || aRemoverRegisto}
-                accessibilityRole="button"
-                accessibilityLabel={`Remover ${item.nome_comercial || item.nome || "estabelecimento"}`}
-              >
-                <Ionicons name="trash-outline" size={16} color="#B42318" />
-                <Text style={styles.recordDeleteActionText}>Remover</Text>
-              </TouchableOpacity>
+              {!isGestor && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.recordActionButton, styles.recordEditAction]}
+                    onPress={() => abrirEdicao(item)}
+                    disabled={aAtualizarId === String(item.id) || aRemoverRegisto}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="create-outline" size={16} color="#173B70" />
+                    <Text style={styles.recordEditActionText}>Editar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.recordActionButton, styles.recordDeleteAction]}
+                    onPress={() => setRegistoEmRemocao({ tipo: "estabelecimento", item })}
+                    disabled={aAtualizarId === String(item.id) || aRemoverRegisto}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover ${item.nome_comercial || item.nome || "estabelecimento"}`}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#B42318" />
+                    <Text style={styles.recordDeleteActionText}>Remover</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
-            {item.ativo !== undefined && (
+            {!isGestor && item.ativo !== undefined && (
               <TouchableOpacity
                 style={styles.textAction}
                 disabled={aAtualizarId === String(item.id)}
@@ -1187,26 +1254,30 @@ export default function AdminScreen() {
             <Text style={styles.productPrice}>
               {Number(item.preco || 0).toLocaleString("pt-AO")} Kz
             </Text>
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => abrirEdicao(item)}
-              disabled={aAtualizarId === String(item.id) || aGuardarEdicao}
-              accessibilityRole="button"
-            >
-              <Ionicons name="create-outline" size={17} color="#173B70" />
-              <Text style={styles.editButtonText}>Editar produto</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.recordActionButton, styles.recordDeleteAction, styles.productDeleteAction]}
-              onPress={() => setRegistoEmRemocao({ tipo: "produto", item })}
-              disabled={aRemoverRegisto}
-              accessibilityRole="button"
-              accessibilityLabel={`Excluir produto ${item.nome}`}
-            >
-              <Ionicons name="trash-outline" size={16} color="#B42318" />
-              <Text style={styles.recordDeleteActionText}>Excluir produto</Text>
-            </TouchableOpacity>
-            {item.ativo !== undefined && (
+            {!isGestor && (
+              <>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => abrirEdicao(item)}
+                  disabled={aAtualizarId === String(item.id) || aGuardarEdicao}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="create-outline" size={17} color="#173B70" />
+                  <Text style={styles.editButtonText}>Editar produto</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.recordActionButton, styles.recordDeleteAction, styles.productDeleteAction]}
+                  onPress={() => setRegistoEmRemocao({ tipo: "produto", item })}
+                  disabled={aRemoverRegisto}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Excluir produto ${item.nome}`}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#B42318" />
+                  <Text style={styles.recordDeleteActionText}>Excluir produto</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {!isGestor && item.ativo !== undefined && (
               <TouchableOpacity
                 style={styles.textAction}
                 disabled={aAtualizarId === String(item.id)}
@@ -1223,14 +1294,19 @@ export default function AdminScreen() {
     );
   };
 
-  const secaoSelecionada = SECOES.find((item) => item.id === secao);
+  const secoesVisiveis = isGestor
+    ? SECOES.filter((item) => !["gestores", "configuracoes"].includes(item.id))
+    : SECOES;
+  const secaoSelecionada = secoesVisiveis.find((item) => item.id === secao);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#173B70" />
       <View style={styles.header}>
         <View>
-          <Text style={styles.brand}>BWÉ-GO · ADMINISTRAÇÃO</Text>
+          <Text style={styles.brand}>
+            {isGestor ? "BWÉ-GO · GESTÃO" : "BWÉ-GO · ADMINISTRAÇÃO"}
+          </Text>
           <Text style={styles.headerTitle}>{secaoSelecionada?.titulo}</Text>
         </View>
         <TouchableOpacity
@@ -1249,7 +1325,7 @@ export default function AdminScreen() {
         contentContainerStyle={styles.navigationContent}
         showsHorizontalScrollIndicator={false}
       >
-        {SECOES.map((item) => (
+        {secoesVisiveis.map((item) => (
           <TouchableOpacity
             key={item.id}
             style={[styles.navigationItem, secao === item.id && styles.navigationItemActive]}
@@ -1286,12 +1362,16 @@ export default function AdminScreen() {
               {secao === "aprovacoes"
                 ? "Analisa e decide os pedidos de aprovação dos motoristas."
                 : secao === "farmacias"
-                  ? "Consulta e edita os dados das farmácias registadas."
+                  ? isGestor
+                    ? "Consulta os dados das farmácias registadas."
+                    : "Consulta e edita os dados das farmácias registadas."
                   : secao === "configuracoes"
                     ? "Gere o teu perfil e a segurança da conta administrativa."
-                  : "Consulta, edita e acompanha os registos da plataforma."}
+                  : isGestor
+                    ? "Consulta os registos da plataforma. A aprovação e reprovação de motoristas são as únicas ações disponíveis."
+                    : "Consulta, edita e acompanha os registos da plataforma."}
             </Text>
-            {["parceiros", "farmacias", "produtos", "categorias", "gestores"].includes(secao) && (
+            {!isGestor && ["parceiros", "farmacias", "produtos", "categorias", "gestores"].includes(secao) && (
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() =>
@@ -1389,7 +1469,7 @@ export default function AdminScreen() {
             </View>
             <Text style={styles.confirmTitle}>Terminar sessão?</Text>
             <Text style={styles.confirmMessage}>
-              Queres sair da área de administração?
+              Queres sair da área de {isGestor ? "gestão" : "administração"}?
             </Text>
             {!!erroLogout && <Text style={styles.errorText}>{erroLogout}</Text>}
             <View style={styles.confirmActions}>
@@ -1432,7 +1512,9 @@ export default function AdminScreen() {
             <View style={styles.modalHeading}>
               <View style={styles.modalTitleGroup}>
                 <Text style={styles.modalTitle}>
-                  {secao === "produtos"
+                  {secao === "gestores"
+                    ? "Editar gestor"
+                    : secao === "produtos"
                     ? "Editar produto"
                     : secao === "categorias"
                       ? "Editar categoria"
@@ -1485,6 +1567,16 @@ export default function AdminScreen() {
                     />
                   </View>
                 ))}
+              {(secao === "clientes" ||
+                secao === "motoristas" ||
+                secao === "aprovacoes") && (
+                <SeletorImagemPerfil
+                  uri={imagemPerfil?.uri || registoEmEdicao?.foto_url}
+                  onPress={selecionarImagemPerfil}
+                  disabled={aGuardarEdicao}
+                  titulo={`Foto do ${secao === "clientes" ? "cliente" : "motorista"} — seleciona uma nova imagem para alterar`}
+                />
+              )}
               {secao === "produtos" && (
                 <SeletorImagemPerfil
                   uri={
@@ -1507,6 +1599,20 @@ export default function AdminScreen() {
                   onPress={selecionarImagemPerfil}
                   disabled={aGuardarEdicao}
                 />
+              )}
+              {secao === "gestores" && (
+                <SeletorImagemPerfil
+                  uri={imagemPerfil?.uri || registoEmEdicao?.foto_url}
+                  onPress={selecionarImagemPerfil}
+                  disabled={aGuardarEdicao}
+                  titulo="Foto do gestor — seleciona uma nova imagem para alterar"
+                />
+              )}
+              {!!erroEdicao && (
+                <View style={styles.messageCard}>
+                  <Ionicons name="alert-circle-outline" size={22} color="#D92D20" />
+                  <Text style={styles.errorText}>{erroEdicao}</Text>
+                </View>
               )}
             </ScrollView>
             <View style={styles.modalActions}>
@@ -1545,16 +1651,17 @@ export default function AdminScreen() {
               <Ionicons name="trash-outline" size={25} color="#B42318" />
             </View>
             <Text style={styles.confirmTitle}>
-              {registoEmRemocao?.tipo === "estabelecimento" ||
-                registoEmRemocao?.tipo === "gestor"
+              {registoEmRemocao?.tipo === "gestor"
+                ? "Remover gestor?"
+                : registoEmRemocao?.tipo === "estabelecimento"
                 ? "Confirmar remoção"
                 : "Confirmar exclusão"}
             </Text>
             <Text style={styles.confirmMessage}>
-              {registoEmRemocao?.tipo === "estabelecimento"
+              {registoEmRemocao?.tipo === "gestor"
+                ? "Confirmas a remoção do gestor "
+                : registoEmRemocao?.tipo === "estabelecimento"
                 ? "Confirmas a remoção de "
-                : registoEmRemocao?.tipo === "gestor"
-                  ? "Confirmas a remoção do gestor "
                   : "Confirmas que pretendes excluir "}
               <Text style={styles.confirmName}>
                 {registoEmRemocao?.item?.nome_comercial ||
@@ -1565,7 +1672,7 @@ export default function AdminScreen() {
               {registoEmRemocao?.tipo === "produto"
                 ? " Se o produto estiver associado a pedidos, não será possível excluí-lo; desativa-o para o ocultar e preservar o histórico."
                 : registoEmRemocao?.tipo === "gestor"
-                  ? " A conta será desativada e perderá acesso ao painel. O último gestor e a tua própria conta não podem ser removidos."
+                  ? " A conta será desativada e perderá acesso ao painel."
                 : registoEmRemocao?.tipo === "categoria" &&
                     registoEmRemocao.item?.id == null
                   ? ' Os produtos associados serão mantidos com a categoria "Sem categoria".'
@@ -1599,8 +1706,9 @@ export default function AdminScreen() {
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text style={styles.confirmDeleteText}>
-                    {registoEmRemocao?.tipo === "estabelecimento" ||
-                    registoEmRemocao?.tipo === "gestor"
+                    {registoEmRemocao?.tipo === "gestor"
+                      ? "Sim, remover gestor"
+                      : registoEmRemocao?.tipo === "estabelecimento"
                       ? "Sim, remover"
                       : "Sim, excluir"}
                   </Text>
@@ -1714,7 +1822,7 @@ export default function AdminScreen() {
                 </Text>
                 <Text style={styles.modalSubtitle}>
                   {tipoCriacao === "gestor"
-                    ? "Cria uma conta administrativa para gerir a plataforma."
+                    ? "Cria uma conta separada para um gestor do sistema."
                     : tipoCriacao === "produto"
                     ? "Associa o produto a uma farmácia ou empresa parceira."
                     : tipoCriacao === "categoria"
@@ -1742,7 +1850,8 @@ export default function AdminScreen() {
                     { key: "nome", label: "Nome completo *", autoCapitalize: "words" },
                     { key: "email", label: "Email *", keyboardType: "email-address", autoCapitalize: "none" },
                     { key: "telefone", label: "Telefone *", keyboardType: "phone-pad" },
-                    { key: "senha", label: "Palavra-passe (mínimo 12 caracteres) *", secureTextEntry: true, autoCapitalize: "none" },
+                    { key: "funcao", label: "Função *" },
+                    { key: "senha", label: "Palavra-passe (mínimo 8 caracteres) *", secureTextEntry: true, autoCapitalize: "none" },
                     { key: "confirmarSenha", label: "Confirmar palavra-passe *", secureTextEntry: true, autoCapitalize: "none" },
                   ].map((campo) => (
                     <View key={campo.key} style={styles.editField}>
@@ -1763,7 +1872,19 @@ export default function AdminScreen() {
                       />
                     </View>
                   ))}
+                  <SeletorImagemPerfil
+                    uri={imagemPerfil?.uri}
+                    onPress={selecionarImagemPerfil}
+                    disabled={aCriarRegisto}
+                    titulo="Foto do gestor *"
+                  />
                 </>
+              )}
+              {!!erroCriacao && (
+                <View style={styles.messageCard}>
+                  <Ionicons name="alert-circle-outline" size={22} color="#D92D20" />
+                  <Text style={styles.errorText}>{erroCriacao}</Text>
+                </View>
               )}
               {(tipoCriacao === "parceiro" || tipoCriacao === "farmacia") && (
                 <>

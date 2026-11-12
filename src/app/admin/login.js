@@ -61,8 +61,8 @@ export default function AdminLoginScreen() {
         );
       }
 
-      if (resultado.usuario?.tipo !== "admin" || !resultado.token) {
-        throw new Error("Esta página é exclusiva para administradores.");
+      if (!["admin", "gestor"].includes(resultado.usuario?.tipo) || !resultado.token) {
+        throw new Error("Esta página é exclusiva para administradores e gestores.");
       }
 
       await guardarSessao(resultado.token, resultado.usuario, false);
@@ -131,7 +131,7 @@ export default function AdminLoginScreen() {
     const inicializar = async () => {
       try {
         const usuario = await obterUsuario();
-        if (ativo && usuario?.tipo === "admin") {
+        if (ativo && ["admin", "gestor"].includes(usuario?.tipo)) {
           router.replace("/admin");
           return;
         }
@@ -197,12 +197,12 @@ export default function AdminLoginScreen() {
             <Text style={styles.title}>
               {modoCadastro
                 ? "Criar primeiro administrador"
-                : "Entrar como administrador"}
+                : "Entrar como administrador ou gestor"}
             </Text>
             <Text style={styles.subtitle}>
               {modoCadastro
                 ? "Este cadastro só é permitido enquanto ainda não existir um administrador."
-                : "Usa as credenciais da tua conta administrativa."}
+                : "Usa as credenciais da tua conta de administração ou gestão."}
             </Text>
 
             {modoCadastro ? (

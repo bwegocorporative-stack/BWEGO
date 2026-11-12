@@ -53,7 +53,7 @@ const erroDuplicado = (erro) => {
 };
 
 const verificarAdministrador = (req, res) => {
-    if (req.user?.tipo !== 'admin') {
+    if (req.user?.tipo !== 'admin' && req.user?.tipo !== 'gestor') {
         res.status(403).json({
             sucesso: false,
             mensagem: 'Não tens autorização para realizar esta operação.'
@@ -888,6 +888,16 @@ exports.atualizarEstadoAprovacao = async (req, res) => {
 
         const motoristaId = validarId(req.params.id);
         const { estado_aprovacao } = req.body;
+
+        if (
+            req.user?.tipo === 'gestor' &&
+            !['aprovado', 'rejeitado'].includes(estado_aprovacao)
+        ) {
+            return res.status(403).json({
+                sucesso: false,
+                mensagem: 'Gestores só podem aprovar ou reprovar motoristas.'
+            });
+        }
 
         if (!motoristaId) {
             return res.status(400).json({

@@ -43,6 +43,28 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB;
 
 -- ============================================================
+-- 01A. GESTORES (CONTAS SEPARADAS DOS ADMINISTRADORES)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS gestores (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    telefone VARCHAR(25) NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    funcao VARCHAR(120) NOT NULL,
+    foto_url VARCHAR(500) NOT NULL,
+    foto_public_id VARCHAR(255) NOT NULL,
+    senha_hash VARCHAR(255) NOT NULL,
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    ultimo_login DATETIME NULL,
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_gestores_email (email),
+    UNIQUE KEY uq_gestores_telefone (telefone),
+    KEY idx_gestores_ativo (ativo)
+) ENGINE=InnoDB;
+
+-- ============================================================
 -- 02. MOTORISTAS, VEÍCULOS E DOCUMENTOS
 -- ============================================================
 

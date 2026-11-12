@@ -723,14 +723,14 @@ export default function Perfil() {
               </View>
               <View style={styles.aboutServiceRow}>
                 <Ionicons name="call-outline" size={19} color="#173B70" />
-                <Text style={styles.aboutServiceText}>+244 942 081 324</Text>
+                <Text style={styles.aboutServiceText}>+244 924 222 742</Text>
               </View>
             </View>
 
             <Text style={styles.aboutDeveloper}>
               Desenvolvido por{"\n"}
               <Text style={styles.aboutDeveloperName}>
-                EDSSI — Soluções Inteligentes
+                EDSSI — Softwares Inteligentes,AO
               </Text>
             </Text>
 

@@ -19,7 +19,7 @@ async function adminMiddleware(req, res, next) {
         if (!administradores.length) {
             return res.status(403).json({
                 sucesso: false,
-                mensagem: 'Esta conta de gestor foi removida ou desativada.'
+                mensagem: 'Esta conta de administrador foi removida ou desativada.'
             });
         }
         return next();

@@ -1,9 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 
-import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from "expo-router";
+import {
+  DarkTheme,
+  DefaultTheme,
+  router,
+  Stack,
+  ThemeProvider,
+} from "expo-router";
 
-import { Alert, Image, Platform, StyleSheet, Text, View, useColorScheme } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import {
+  Alert,
+  Image,
+  Platform,
+  StyleSheet,
+  useColorScheme,
+  View,
+} from "react-native";
 import {
   atualizarFotoPerfil,
   limparSessaoTemporariaGaleria,
@@ -30,7 +43,7 @@ export default function RootLayout() {
           if (resultado && "code" in resultado) {
             Alert.alert(
               "Erro ao selecionar a foto",
-              resultado.message || "Não foi possível recuperar a imagem."
+              resultado.message || "Não foi possível recuperar a imagem.",
             );
             await limparSessaoTemporariaGaleria();
           } else if (resultado && !resultado.canceled) {
@@ -42,7 +55,7 @@ export default function RootLayout() {
       } catch (error) {
         Alert.alert(
           "Erro ao recuperar a foto",
-          error.message || "Tenta selecionar a imagem novamente."
+          error.message || "Tenta selecionar a imagem novamente.",
         );
       } finally {
         setPickerVerificado(true);
@@ -53,7 +66,12 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (mostrarSplash || !pickerVerificado || !fotoPendente || fotoProcessada.current) {
+    if (
+      mostrarSplash ||
+      !pickerVerificado ||
+      !fotoPendente ||
+      fotoProcessada.current
+    ) {
       return;
     }
 
@@ -69,7 +87,7 @@ export default function RootLayout() {
         router.replace("/tabs/perfil");
         Alert.alert(
           "Não foi possível atualizar a foto",
-          error.message || "Tenta novamente."
+          error.message || "Tenta novamente.",
         );
       } finally {
         await limparSessaoTemporariaGaleria();
@@ -94,7 +112,7 @@ export default function RootLayout() {
             <View style={[styles.corner, styles.topCorner]} />
             <View style={[styles.corner, styles.bottomCorner]} />
           </View>
-          <Text style={styles.tagline}>A SUA VIAGEM COMEÇA AQUI</Text>
+
           <View style={styles.loadingTrack}>
             <View style={styles.loadingFill} />
           </View>
@@ -124,7 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#101820",
+    backgroundColor: "#173B70",
     paddingHorizontal: 24,
   },
   brandBlock: {
@@ -136,9 +154,9 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 8,
     borderWidth: 2,
-    borderColor: "#F5B91B",
+
     borderRadius: 22,
-    backgroundColor: "#173B70",
+    backgroundColor: "#f3f3f5",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.28,
@@ -182,7 +200,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     overflow: "hidden",
     borderRadius: 2,
-    backgroundColor: "#40505C",
+    backgroundColor: "#ffffff",
   },
   loadingFill: {
     width: "65%",

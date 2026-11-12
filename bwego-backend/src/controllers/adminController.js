@@ -1,5 +1,5 @@
 const mysql = require('../config/db');
-const bcrypt = require('bcryptjs');
+const cloudinary = require('../config/cloudinary');
 
 exports.obterDashboard = async (_req, res) => {
     try {
@@ -69,166 +69,6 @@ exports.obterDashboard = async (_req, res) => {
     }
 };
 
-exports.listarGestores = async (_req, res) => {
-    try {
-        const [gestores] = await mysql.execute(
-            `SELECT id, nome, email, telefone, ativo, criado_em
-             FROM usuarios
-             WHERE tipo = 'admin'
-             ORDER BY ativo DESC, nome ASC`
-        );
-        return res.status(200).json({ sucesso: true, gestores });
-    } catch (erro) {
-        console.error('Erro ao listar gestores:', erro);
-        return res.status(500).json({
-            sucesso: false,
-            mensagem: 'Não foi possível carregar os gestores.'
-        });
-    }
-};
-
-exports.criarGestor = async (req, res) => {
-    const body = req.body || {};
-    if (
-        typeof body.nome !== 'string' ||
-        typeof body.email !== 'string' ||
-        typeof body.telefone !== 'string' ||
-        typeof body.senha !== 'string' ||
-        typeof body.confirmarSenha !== 'string'
-    ) {
-        return res.status(400).json({
-            sucesso: false,
-            mensagem: 'Preenche nome, email, telefone e palavra-passe.'
-        });
-    }
-
-    const { dados, erro } = normalizarDadosContacto(body);
-    if (erro) return res.status(400).json({ sucesso: false, mensagem: erro });
-    if (!dados.email || !dados.telefone) {
-        return res.status(400).json({
-            sucesso: false,
-            mensagem: 'Email e telefone são obrigatórios para criar um gestor.'
-        });
-    }
-    if (
-        body.senha.length < 12 ||
-        Buffer.byteLength(body.senha, 'utf8') > 72
-    ) {
-        return res.status(400).json({
-            sucesso: false,
-            mensagem: 'A palavra-passe deve ter pelo menos 12 caracteres e não ultrapassar 72 bytes.'
-        });
-    }
-    if (body.senha !== body.confirmarSenha) {
-        return res.status(400).json({
-            sucesso: false,
-            mensagem: 'As palavras-passe não coincidem.'
-        });
-    }
-
-    try {
-        const senhaHash = await bcrypt.hash(body.senha, 12);
-        const [resultado] = await mysql.execute(
-            `INSERT INTO usuarios (nome, email, telefone, senha_hash, tipo, ativo)
-             VALUES (?, ?, ?, ?, 'admin', TRUE)`,
-            [dados.nome, dados.email, dados.telefone, senhaHash]
-        );
-        return res.status(201).json({
-            sucesso: true,
-            mensagem: 'Gestor criado com sucesso.',
-            gestor: {
-                id: resultado.insertId,
-                nome: dados.nome,
-                email: dados.email,
-                telefone: dados.telefone,
-                ativo: 1
-            }
-        });
-    } catch (erroCriacao) {
-        console.error('Erro ao criar gestor:', erroCriacao);
-        if (erroCriacao.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({
-                sucesso: false,
-                mensagem: 'Este email ou telefone já está associado a uma conta.'
-            });
-        }
-        return res.status(500).json({
-            sucesso: false,
-            mensagem: 'Não foi possível criar o gestor.'
-        });
-    }
-};
-
-exports.removerGestor = async (req, res) => {
-    const id = Number(req.params.id);
-    const administradorId = Number(req.user?.id);
-    if (!Number.isSafeInteger(id) || id < 1) {
-        return res.status(400).json({
-            sucesso: false,
-            mensagem: 'ID do gestor inválido.'
-        });
-    }
-    if (id === administradorId) {
-        return res.status(400).json({
-            sucesso: false,
-            mensagem: 'Não podes remover a tua própria conta de gestor.'
-        });
-    }
-
-    let conexao;
-    try {
-        conexao = await mysql.getConnection();
-        await conexao.beginTransaction();
-        const [gestoresAtivos] = await conexao.execute(
-            `SELECT id
-             FROM usuarios
-             WHERE tipo = 'admin' AND ativo = TRUE
-             FOR UPDATE`
-        );
-        if (!gestoresAtivos.some((gestor) => Number(gestor.id) === id)) {
-            await conexao.rollback();
-            return res.status(404).json({
-                sucesso: false,
-                mensagem: 'Gestor ativo não encontrado.'
-            });
-        }
-        if (gestoresAtivos.length <= 1) {
-            await conexao.rollback();
-            return res.status(409).json({
-                sucesso: false,
-                mensagem: 'Não é possível remover o último gestor ativo.'
-            });
-        }
-
-        await conexao.execute(
-            `UPDATE usuarios
-             SET ativo = FALSE
-             WHERE id = ? AND tipo = 'admin' AND ativo = TRUE`,
-            [id]
-        );
-        await conexao.commit();
-        return res.status(200).json({
-            sucesso: true,
-            mensagem: 'Gestor removido com sucesso.'
-        });
-    } catch (erroRemocao) {
-        if (conexao) {
-            try {
-                await conexao.rollback();
-            } catch (erroRollback) {
-                console.error('Erro ao reverter remoção de gestor:', erroRollback);
-            }
-        }
-        console.error('Erro ao remover gestor:', erroRemocao);
-        return res.status(500).json({
-            sucesso: false,
-            mensagem: 'Não foi possível remover o gestor.'
-        });
-    } finally {
-        if (conexao) conexao.release();
-    }
-};
-
 const CAMPOS_CONTACTO = ['nome', 'email', 'telefone'];
 
 const normalizarDadosContacto = (body) => {
@@ -281,24 +121,36 @@ exports.atualizarCliente = async (req, res) => {
     }
     const { dados, erro } = normalizarDadosContacto(req.body || {});
     if (erro) return res.status(400).json({ sucesso: false, mensagem: erro });
-    if (!Object.keys(dados).length) {
+    if (!Object.keys(dados).length && !req.file) {
         return res.status(400).json({ sucesso: false, mensagem: 'Indica pelo menos um campo para atualizar.' });
     }
 
     try {
-        const [resultado] = await mysql.execute(
-            `UPDATE usuarios
-             SET ${Object.keys(dados).map((campo) => `${campo} = ?`).join(', ')}
-             WHERE id = ? AND tipo = 'cliente'`,
-            [...Object.keys(dados).map((campo) => dados[campo]), id]
+        const [clientes] = await mysql.execute(
+            `SELECT foto_public_id FROM usuarios WHERE id = ? AND tipo = 'cliente' LIMIT 1`,
+            [id]
         );
-        if (!resultado.affectedRows) {
-            const [existente] = await mysql.execute(
-                `SELECT id FROM usuarios WHERE id = ? AND tipo = 'cliente' LIMIT 1`,
-                [id]
-            );
-            if (!existente.length) {
-                return res.status(404).json({ sucesso: false, mensagem: 'Cliente não encontrado.' });
+        if (!clientes.length) {
+            return res.status(404).json({ sucesso: false, mensagem: 'Cliente não encontrado.' });
+        }
+
+        const campos = Object.keys(dados).map((campo) => `${campo} = ?`);
+        const valores = Object.keys(dados).map((campo) => dados[campo]);
+        if (req.file) {
+            campos.push('foto_url = ?', 'foto_public_id = ?');
+            valores.push(req.file.path, req.file.filename);
+        }
+        valores.push(id);
+        await mysql.execute(
+            `UPDATE usuarios SET ${campos.join(', ')} WHERE id = ? AND tipo = 'cliente'`,
+            valores
+        );
+        const fotoAnteriorId = clientes[0].foto_public_id;
+        if (req.file && fotoAnteriorId && fotoAnteriorId !== req.file.filename) {
+            try {
+                await cloudinary.uploader.destroy(fotoAnteriorId);
+            } catch (erroImagem) {
+                console.error('Erro ao remover foto anterior do cliente:', erroImagem);
             }
         }
         return res.status(200).json({ sucesso: true, mensagem: 'Dados do cliente atualizados.' });
@@ -363,25 +215,43 @@ exports.atualizarMotorista = async (req, res) => {
         )) {
         return res.status(400).json({ sucesso: false, mensagem: 'A validade da carta deve estar no formato AAAA-MM-DD.' });
     }
-    if (!Object.keys(dadosContacto).length && !Object.keys(dadosMotorista).length) {
+    if (!Object.keys(dadosContacto).length && !Object.keys(dadosMotorista).length && !req.file) {
         return res.status(400).json({ sucesso: false, mensagem: 'Indica pelo menos um campo para atualizar.' });
     }
 
     let conexao;
+    let fotoAnteriorId;
     try {
         conexao = await mysql.getConnection();
         await conexao.beginTransaction();
         const [motoristas] = await conexao.execute(
-            `SELECT usuario_id FROM motoristas WHERE id = ? LIMIT 1 FOR UPDATE`,
+            `SELECT m.usuario_id, u.foto_public_id
+             FROM motoristas m
+             INNER JOIN usuarios u ON u.id = m.usuario_id
+             WHERE m.id = ? LIMIT 1 FOR UPDATE`,
             [id]
         );
         if (!motoristas.length) {
             await conexao.rollback();
             return res.status(404).json({ sucesso: false, mensagem: 'Motorista não encontrado.' });
         }
+        fotoAnteriorId = motoristas[0].foto_public_id;
         await atualizarCamposPermitidos(conexao, 'usuarios', dadosContacto, motoristas[0].usuario_id);
+        if (req.file) {
+            await atualizarCamposPermitidos(conexao, 'usuarios', {
+                foto_url: req.file.path,
+                foto_public_id: req.file.filename
+            }, motoristas[0].usuario_id);
+        }
         await atualizarCamposPermitidos(conexao, 'motoristas', dadosMotorista, id);
         await conexao.commit();
+        if (req.file && fotoAnteriorId && fotoAnteriorId !== req.file.filename) {
+            try {
+                await cloudinary.uploader.destroy(fotoAnteriorId);
+            } catch (erroImagem) {
+                console.error('Erro ao remover foto anterior do motorista:', erroImagem);
+            }
+        }
         return res.status(200).json({ sucesso: true, mensagem: 'Dados do motorista atualizados.' });
     } catch (erroAtualizacao) {
         if (conexao) await conexao.rollback();

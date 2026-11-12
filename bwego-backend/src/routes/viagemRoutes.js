@@ -24,6 +24,18 @@ router.get(
     viagemController.listar
 );
 
+// Pedidos imediatos próximos do motorista disponível
+router.get(
+    '/disponiveis',
+    viagemController.listarDisponiveis
+);
+
+// Viagem atualmente atribuída ao motorista autenticado
+router.get(
+    '/ativa',
+    viagemController.obterAtiva
+);
+
 // Converter coordenadas em endereço
 router.get(
     '/localizacao/reversa',

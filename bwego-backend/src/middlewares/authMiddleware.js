@@ -18,8 +18,7 @@ const authMiddleware = (req, res, next) => {
         }
 
         // Verificar formato Bearer
-        const partes = authorization.split(' ');
-
+        const partes = authorization.trim().split(/\s+/);
         if (partes.length !== 2 || partes[0] !== 'Bearer') {
             return res.status(401).json({
                 sucesso: false,
@@ -34,6 +33,13 @@ const authMiddleware = (req, res, next) => {
             token,
             process.env.JWT_SECRET
         );
+
+        if (decoded.tipo === 'gestor' && req.baseUrl !== '/api/admin') {
+            return res.status(403).json({
+                sucesso: false,
+                mensagem: 'Gestores só podem aceder à área de gestão.'
+            });
+        }
 
         // Disponibilizar utilizador autenticado
         req.user = decoded;

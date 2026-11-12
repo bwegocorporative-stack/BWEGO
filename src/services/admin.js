@@ -21,6 +21,24 @@ function criarDadosMultipart(dados, imagem) {
   return formData;
 }
 
+async function criarDadosMultipartComImagem(dados, imagem, nomePadrao) {
+  const imagemWebSemFicheiro =
+    Platform.OS === 'web' && imagem?.uri && !imagem.file;
+  const formData = criarDadosMultipart(
+    dados,
+    imagemWebSemFicheiro ? null : imagem
+  );
+  if (imagemWebSemFicheiro) {
+    const respostaImagem = await fetch(imagem.uri);
+    if (!respostaImagem.ok) {
+      throw new Error('Não foi possível ler a nova imagem.');
+    }
+    const ficheiro = await respostaImagem.blob();
+    formData.append('imagem', ficheiro, imagem.fileName || nomePadrao);
+  }
+  return formData;
+}
+
 async function requisitarAdmin(caminho, opcoes = {}) {
   const token = await obterToken();
   if (!token) {
@@ -83,10 +101,18 @@ export async function listarGestoresAdmin() {
   return resultado.gestores || [];
 }
 
-export async function criarGestorAdmin(dados) {
+export async function criarGestorAdmin(dados, imagem) {
   return requisitarAdmin('/gestores', {
     method: 'POST',
-    body: JSON.stringify(dados),
+    body: criarDadosMultipart(dados, imagem),
+  });
+}
+
+export async function atualizarGestorAdmin(id, dados, imagem) {
+  const body = await criarDadosMultipartComImagem(dados, imagem, 'gestor.jpg');
+  return requisitarAdmin(`/gestores/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body,
   });
 }
 
@@ -185,17 +211,23 @@ export async function atualizarAprovacaoMotorista(id, estado_aprovacao) {
   });
 }
 
-export async function atualizarClienteAdmin(id, dados) {
+export async function atualizarClienteAdmin(id, dados, imagem) {
+  const body = imagem
+    ? await criarDadosMultipartComImagem(dados, imagem, 'cliente.jpg')
+    : JSON.stringify(dados);
   return requisitarAdmin(`/clientes/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    body: JSON.stringify(dados),
+    body,
   });
 }
 
-export async function atualizarMotoristaAdmin(id, dados) {
+export async function atualizarMotoristaAdmin(id, dados, imagem) {
+  const body = imagem
+    ? await criarDadosMultipartComImagem(dados, imagem, 'motorista.jpg')
+    : JSON.stringify(dados);
   return requisitarAdmin(`/motoristas/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    body: JSON.stringify(dados),
+    body,
   });
 }
 

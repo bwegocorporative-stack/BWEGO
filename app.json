@@ -30,6 +30,12 @@
         }
       ],
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permite que o Bwé-Go partilhe a tua localização com clientes enquanto estás disponível ou numa viagem."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
